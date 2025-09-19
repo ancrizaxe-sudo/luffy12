@@ -1,0 +1,54 @@
+{
+  "name": "herbionyx-network",
+  "version": "1.0.0",
+  "client": {
+    "organization": "Org1MSP",
+    "connection": {
+      "timeout": {
+        "peer": {
+          "endorser": "300"
+        },
+        "orderer": "300"
+      }
+    }
+  },
+  "organizations": {
+    "Org1MSP": {
+      "mspid": "Org1MSP",
+      "peers": [
+        "peer0.org1.herbionyx.com"
+      ],
+      "certificateAuthorities": [
+        "ca.org1.herbionyx.com"
+      ]
+    }
+  },
+  "orderers": {
+    "orderer.herbionyx.com": {
+      "url": "grpcs://localhost:7050",
+      "tlsCACerts": {
+        "path": "fabric-network/organizations/ordererOrganizations/herbionyx.com/orderers/orderer.herbionyx.com/tls/ca.crt"
+      }
+    }
+  },
+  "peers": {
+    "peer0.org1.herbionyx.com": {
+      "url": "grpcs://localhost:7051",
+      "tlsCACerts": {
+        "path": "fabric-network/organizations/peerOrganizations/org1.herbionyx.com/peers/peer0.org1.herbionyx.com/tls/ca.crt"
+      }
+    }
+  },
+  "certificateAuthorities": {
+    "ca.org1.herbionyx.com": {
+      "url": "https://localhost:7054",
+      "caName": "ca.org1.herbionyx.com",
+      "tlsCACerts": {
+        "path": "fabric-network/organizations/peerOrganizations/org1.herbionyx.com/ca/ca.org1.herbionyx.com-cert.pem"
+      },
+      "httpOptions": {
+        "verify": false
+      }
+    }
+  }
+}
