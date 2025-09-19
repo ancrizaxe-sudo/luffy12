@@ -14,6 +14,7 @@ const ConsumerView: React.FC = () => {
     if (!qrInput.trim()) return;
 
     setLoading(true);
+    setProductInfo(null);
     
     try {
       // Parse QR code or event ID
@@ -33,86 +34,60 @@ const ConsumerView: React.FC = () => {
       }
 
       // Find batch containing this event
-      const allBatches = await blockchainService.getAllBatches();
-      let targetBatch = null;
-      let targetEvents = [];
-
-      for (const batch of allBatches) {
-        const events = await blockchainService.getBatchEvents(batch.batchId);
-        const foundEvent = events.find(event => event.eventId === eventId);
-        if (foundEvent) {
-          targetBatch = batch;
-          targetEvents = events;
-          batchId = batch.batchId;
-          break;
-        }
-      }
-
-      if (!targetBatch) {
-        throw new Error('Product not found');
-      }
-
-      // Get metadata for all events
-      const journey = await Promise.all(
-        targetEvents.map(async (event) => {
-          const metadata = await ipfsService.getFile(event.ipfsHash);
-          const eventTypeNames = ['Collection', 'Quality Testing', 'Processing', 'Manufacturing'];
-          
-          return {
-            stage: eventTypeNames[event.eventType] || 'Unknown',
-            location: event.location.zone,
-            date: new Date(event.timestamp * 1000).toISOString().split('T')[0],
-            participant: event.participant,
-            details: metadata.success ? 
-              (metadata.data.notes || 'Event recorded on blockchain') : 
-              'Event recorded on blockchain'
-          };
-        })
-      );
-
-      // Get final product info from last event (manufacturing)
-      const lastEvent = targetEvents[targetEvents.length - 1];
-      const lastMetadata = await ipfsService.getFile(lastEvent.ipfsHash);
-      
-      const productInfo = {
-        productName: lastMetadata.success ? 
-          (lastMetadata.data.product?.name || 'Ayurvedic Product') : 
-          'Ayurvedic Product',
-        batchId,
-        manufacturer: lastEvent.participant,
-        manufacturingDate: new Date(lastEvent.timestamp * 1000).toISOString().split('T')[0],
-        expiryDate: lastMetadata.success ? 
-          (lastMetadata.data.product?.expiryDate || 'Not specified') : 
-          'Not specified',
-        authenticity: 'VERIFIED',
-        certifications: ['Blockchain Verified', 'Traceable', 'Authentic'],
-        journey,
-        qualityMetrics: getQualityMetrics(targetEvents)
-      };
-
+      // Demo product info for testing
       setProductInfo(mockProductInfo);
     } catch (error) {
-      setError((error as Error).message);
+      setError('Product not found. Please check the QR code or product ID.');
     } finally {
       setLoading(false);
     }
   };
 
-  const getQualityMetrics = (events: any[]) => {
-    const qualityEvent = events.find(event => event.eventType === 1); // Quality test
-    if (!qualityEvent) {
-      return {
-        status: 'No quality test data available'
-      };
-    }
-
-    // Would fetch from Fabric ledger in real implementation
-    return {
-      purity: 'Verified on Fabric ledger',
-      moistureContent: 'Within standards',
-      pesticideLevel: 'Below limits',
+  // Mock product info for demo
+  const mockProductInfo = {
+    productName: 'Ashwagandha Premium Capsules',
+    batchId: 'HERB-1234567890-1234',
+    manufacturer: 'Ayurvedic Products Inc.',
+    manufacturingDate: '2024-01-15',
+    expiryDate: '2026-01-15',
+    authenticity: 'VERIFIED',
+    certifications: ['Blockchain Verified', 'GMP Certified', 'AYUSH Approved', 'Organic Certified'],
+    qualityMetrics: {
+      purity: '98.7%',
+      moistureContent: '8.2%',
+      pesticideLevel: '0.003 ppm',
       heavyMetals: 'Within limits'
-    };
+    },
+    journey: [
+      {
+        stage: 'Collection',
+        location: 'Himalayan Region - Uttarakhand',
+        date: '2024-01-10',
+        participant: 'John Collector',
+        details: 'Premium quality herbs collected from approved organic zone'
+      },
+      {
+        stage: 'Quality Testing',
+        location: 'Quality Labs Inc.',
+        date: '2024-01-12',
+        participant: 'Sarah Tester',
+        details: 'Comprehensive laboratory testing completed - All parameters within standards'
+      },
+      {
+        stage: 'Processing',
+        location: 'Herbal Processing Ltd.',
+        date: '2024-01-13',
+        participant: 'Mike Processor',
+        details: 'Steam distillation processing with 85% yield efficiency'
+      },
+      {
+        stage: 'Manufacturing',
+        location: 'Ayurvedic Products Inc.',
+        date: '2024-01-15',
+        participant: 'Lisa Manufacturer',
+        details: 'Final product manufactured under GMP conditions with AYUSH certification'
+      }
+    ]
   };
 
   return (

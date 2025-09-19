@@ -10,13 +10,28 @@ import ProcessingForm from './components/Processing/ProcessingForm';
 import ManufacturingForm from './components/Manufacturing/ManufacturingForm';
 import BatchTracker from './components/Tracking/BatchTracker';
 import ConsumerView from './components/Consumer/ConsumerView';
-import Dashboard from './components/Dashboard/Dashboard';
+import AuditLog from './components/Audit/AuditLog';
+import PlatformRating from './components/Consumer/PlatformRating';
 
 const AppContent: React.FC = () => {
-  const { isAuthenticated, loading } = useAuth();
-  const [activeTab, setActiveTab] = useState('collection');
+  const { isAuthenticated, loading, user } = useAuth();
+  const [activeTab, setActiveTab] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showLanding, setShowLanding] = useState(true);
+
+  // Set default tab based on user role
+  useEffect(() => {
+    if (user && !activeTab) {
+      switch (user.role) {
+        case 1: setActiveTab('collection'); break;
+        case 2: setActiveTab('quality'); break;
+        case 3: setActiveTab('processing'); break;
+        case 4: setActiveTab('manufacturing'); break;
+        case 6: setActiveTab('consumer'); break;
+        default: setActiveTab('consumer');
+      }
+    }
+  }, [user, activeTab]);
 
   if (loading) {
     return (
@@ -52,16 +67,12 @@ const AppContent: React.FC = () => {
         return <BatchTracker />;
       case 'consumer':
         return <ConsumerView />;
-      case 'dashboard':
-        return <Dashboard />;
-      case 'qr-scanner':
-        return (
-          <div className="flex items-center justify-center h-64">
-            <p className="text-green-600">QR Scanner coming soon...</p>
-          </div>
-        );
+      case 'audit':
+        return <AuditLog />;
+      case 'rating':
+        return <PlatformRating />;
       default:
-        return <CollectionForm />;
+        return user?.role === 6 ? <ConsumerView /> : <CollectionForm />;
     }
   };
 

@@ -5,11 +5,9 @@ import {
   Cpu, 
   Package, 
   BarChart3, 
-  Users, 
-  Settings,
-  QrCode,
   Search,
-  Shield
+  Shield,
+  FileText
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -25,52 +23,42 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeTab, onTabChange }) => 
   const getMenuItems = () => {
     const commonItems = [
       { id: 'tracking', label: 'Track Batch', icon: Search },
-      { id: 'qr-scanner', label: 'QR Scanner', icon: QrCode },
-      { id: 'consumer', label: 'Consumer View', icon: Shield }
+      { id: 'audit', label: 'Audit Log', icon: FileText }
     ];
 
     if (user?.role === 1) { // Collector
       return [
-        { id: 'collection', label: 'Data Collection', icon: Sprout },
+        { id: 'collection', label: 'Collector Group', icon: Sprout },
         ...commonItems
       ];
     }
 
     if (user?.role === 2) { // Tester
       return [
-        { id: 'quality', label: 'Quality Testing', icon: TestTube },
+        { id: 'quality', label: 'Testing Labs', icon: TestTube },
         ...commonItems
       ];
     }
 
     if (user?.role === 3) { // Processor
       return [
-        { id: 'processing', label: 'Processing', icon: Cpu },
+        { id: 'processing', label: 'Processing Unit', icon: Cpu },
         ...commonItems
       ];
     }
 
     if (user?.role === 4) { // Manufacturer
       return [
-        { id: 'manufacturing', label: 'Manufacturing', icon: Package },
+        { id: 'manufacturing', label: 'Manufacturing Plant', icon: Package },
         ...commonItems
       ];
     }
 
-    if (user?.role === 5) { // Admin
-      return [
-        { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
-        { id: 'users', label: 'User Management', icon: Users },
-        { id: 'batches', label: 'Batch Overview', icon: Package },
-        ...commonItems,
-        { id: 'settings', label: 'Settings', icon: Settings }
-      ];
-    }
-
-    // Consumer role (role 6) or default
+    // Consumer role (role 6)
     return [
       { id: 'consumer', label: 'Verify Product', icon: Shield },
-      { id: 'tracking', label: 'Track Batch', icon: Search }
+      { id: 'tracking', label: 'Track Batch', icon: Search },
+      { id: 'rating', label: 'Rate Platform', icon: BarChart3 }
     ];
   };
 
@@ -118,7 +106,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeTab, onTabChange }) => 
                user?.role === 2 ? 'Tester' : 
                user?.role === 3 ? 'Processor' : 
                user?.role === 4 ? 'Manufacturer' : 
-               user?.role === 5 ? 'Admin' : 'Consumer'}
+               'Consumer'}
             </p>
             <p className="text-xs text-green-600 mt-1">{user?.organization}</p>
           </div>

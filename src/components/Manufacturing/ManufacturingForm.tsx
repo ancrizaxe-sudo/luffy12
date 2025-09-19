@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Package, Upload, AlertCircle, CheckCircle, Loader2, QrCode } from 'lucide-react';
+import { Package, Upload, AlertCircle, CheckCircle, Loader2, QrCode, Award } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import blockchainService from '../../services/blockchainService';
 import ipfsService from '../../services/ipfsService';
@@ -17,11 +17,14 @@ const ManufacturingForm: React.FC = () => {
     batchId: '',
     parentEventId: '',
     qrCode: '',
+    lotNumber: '',
     productName: '',
     productType: 'Herbal Product',
     quantity: '',
     unit: 'units',
+    manufactureDate: new Date().toISOString().split('T')[0],
     expiryDate: '',
+    certificationId: '',
     notes: '',
     manufacturerName: user?.name || '',
     image: null as File | null
@@ -103,11 +106,14 @@ const ManufacturingForm: React.FC = () => {
         eventId: mfgEventId,
         parentEventId,
         manufacturer: formData.manufacturerName,
+        lotNumber: formData.lotNumber,
         productName: formData.productName,
         productType: formData.productType,
         quantity: parseFloat(formData.quantity),
         unit: formData.unit,
+        manufactureDate: formData.manufactureDate,
         expiryDate: formData.expiryDate,
+        certificationId: formData.certificationId,
         manufacturingDate: new Date().toISOString().split('T')[0],
         notes: formData.notes,
         images: imageHash ? [imageHash] : []
@@ -160,14 +166,16 @@ const ManufacturingForm: React.FC = () => {
         eventId: mfgEventId,
         parentEventId,
         product: {
+          lotNumber: formData.lotNumber,
           name: formData.productName,
           type: formData.productType,
           quantity: parseFloat(formData.quantity),
           unit: formData.unit,
+          manufactureDate: formData.manufactureDate,
           expiryDate: formData.expiryDate
         },
         qr: qrResult,
-        fabric: fabricResult
+        fabric: blockchainResult
       });
       
       // Reset form
@@ -175,11 +183,14 @@ const ManufacturingForm: React.FC = () => {
         batchId: '',
         parentEventId: '',
         qrCode: '',
+        lotNumber: '',
         productName: '',
         productType: 'Herbal Product',
         quantity: '',
         unit: 'units',
+        manufactureDate: new Date().toISOString().split('T')[0],
         expiryDate: '',
+        certificationId: '',
         notes: '',
         manufacturerName: user?.name || '',
         image: null
@@ -267,8 +278,8 @@ const ManufacturingForm: React.FC = () => {
             <Package className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-orange-800">Manufacturing</h2>
-            <p className="text-orange-600">Record final product manufacturing</p>
+            <h2 className="text-2xl font-bold text-orange-800">Manufacturing Plant</h2>
+            <p className="text-orange-600">Record final product manufacturing with certifications</p>
           </div>
         </div>
 
@@ -329,6 +340,21 @@ const ManufacturingForm: React.FC = () => {
                 onChange={handleInputChange}
                 required
                 placeholder="PROCESS-1234567890-1234"
+                className="w-full px-4 py-3 border border-orange-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-orange-700 mb-2">
+                Batch/LOT Number *
+              </label>
+              <input
+                type="text"
+                name="lotNumber"
+                value={formData.lotNumber}
+                onChange={handleInputChange}
+                required
+                placeholder="LOT-2024-001"
                 className="w-full px-4 py-3 border border-orange-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               />
             </div>
@@ -402,6 +428,20 @@ const ManufacturingForm: React.FC = () => {
 
             <div>
               <label className="block text-sm font-medium text-orange-700 mb-2">
+                Manufacture Date *
+              </label>
+              <input
+                type="date"
+                name="manufactureDate"
+                value={formData.manufactureDate}
+                onChange={handleInputChange}
+                required
+                className="w-full px-4 py-3 border border-orange-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-orange-700 mb-2">
                 Expiry Date
               </label>
               <input
@@ -411,6 +451,23 @@ const ManufacturingForm: React.FC = () => {
                 onChange={handleInputChange}
                 className="w-full px-4 py-3 border border-orange-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-orange-700 mb-2">
+                Regulatory/Certification ID
+              </label>
+              <input
+                type="text"
+                name="certificationId"
+                value={formData.certificationId}
+                onChange={handleInputChange}
+                placeholder="GMP/AYUSH/FDA certification number"
+                className="w-full px-4 py-3 border border-orange-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              />
+              <p className="text-xs text-orange-600 mt-1">
+                Enter GMP, AYUSH, FDA or other regulatory certification numbers
+              </p>
             </div>
 
             <div>

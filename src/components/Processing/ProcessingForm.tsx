@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Cpu, Upload, AlertCircle, CheckCircle, Loader2, QrCode } from 'lucide-react';
+import { Cpu, Upload, AlertCircle, CheckCircle, Loader2, QrCode, MapPin, Calculator } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { PROCESSING_METHODS } from '../../config/herbs';
 import blockchainService from '../../services/blockchainService';
@@ -13,19 +13,59 @@ const ProcessingForm: React.FC = () => {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
   const [qrResult, setQrResult] = useState<any>(null);
+  const [location, setLocation] = useState<any>(null);
+  const [yieldPercentage, setYieldPercentage] = useState<number | null>(null);
 
   const [formData, setFormData] = useState({
     batchId: '',
     parentEventId: '',
     qrCode: '',
+    inputWeight: '',
     method: '',
     temperature: '',
     yield: '',
+    startDate: new Date().toISOString().split('T')[0],
+    endDate: new Date().toISOString().split('T')[0],
     duration: '',
+    processingLocation: '',
     notes: '',
     processorName: user?.name || '',
     image: null as File | null
   });
+
+  useEffect(() => {
+    getCurrentLocation();
+  }, []);
+
+  useEffect(() => {
+    // Calculate yield percentage when input weight and yield change
+    if (formData.inputWeight && formData.yield) {
+      const inputWeight = parseFloat(formData.inputWeight);
+      const outputWeight = parseFloat(formData.yield);
+      if (inputWeight > 0) {
+        setYieldPercentage((outputWeight / inputWeight) * 100);
+      }
+    } else {
+      setYieldPercentage(null);
+    }
+  }, [formData.inputWeight, formData.yield]);
+
+  const getCurrentLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLocation({
+            latitude: position.coords.latitude.toString(),
+            longitude: position.coords.longitude.toString(),
+            timestamp: new Date().toISOString()
+          });
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+        }
+      );
+    }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -80,10 +120,16 @@ const ProcessingForm: React.FC = () => {
         eventId: processEventId,
         parentEventId,
         processor: formData.processorName,
+        inputWeight: parseFloat(formData.inputWeight),
         method: formData.method,
         temperature: formData.temperature ? parseFloat(formData.temperature) : null,
         duration: formData.duration,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
         yield: parseFloat(formData.yield),
+        yieldPercentage: yieldPercentage,
+        processingLocation: formData.processingLocation,
+        location: location,
         processDate: new Date().toISOString().split('T')[0],
         notes: formData.notes,
         images: imageHash ? [imageHash] : []
@@ -139,10 +185,11 @@ const ProcessingForm: React.FC = () => {
           method: formData.method,
           temperature: formData.temperature ? parseFloat(formData.temperature) : null,
           yield: parseFloat(formData.yield),
-          duration: formData.duration
+          duration: formData.duration,
+          yieldPercentage: yieldPercentage
         },
         qr: qrResult,
-        fabric: fabricResult
+        fabric: blockchainResult
       });
       
       // Reset form
@@ -150,14 +197,19 @@ const ProcessingForm: React.FC = () => {
         batchId: '',
         parentEventId: '',
         qrCode: '',
+        inputWeight: '',
         method: '',
         temperature: '',
         yield: '',
+        startDate: new Date().toISOString().split('T')[0],
+        endDate: new Date().toISOString().split('T')[0],
         duration: '',
+        processingLocation: '',
         notes: '',
         processorName: user?.name || '',
         image: null
       });
+      setYieldPercentage(null);
     } catch (error) {
       setError((error as Error).message);
     } finally {
@@ -241,8 +293,8 @@ const ProcessingForm: React.FC = () => {
             <Cpu className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-purple-800">Processing</h2>
-            <p className="text-purple-600">Record processing operations</p>
+            <h2 className="text-2xl font-bold text-purple-800">Processing Unit</h2>
+            <p className="text-purple-600">Record processing operations with location and timestamps</p>
           </div>
         </div>
 
@@ -309,6 +361,65 @@ const ProcessingForm: React.FC = () => {
 
             <div>
               <label className="block text-sm font-medium text-purple-700 mb-2">
+                Input Weight (grams) *
+              </label>
+              <input
+                type="number"
+                step="0.1"
+                name="inputWeight"
+                value={formData.inputWeight}
+                onChange={handleInputChange}
+                required
+                placeholder="500.0"
+                className="w-full px-4 py-3 border border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-purple-700 mb-2">
+                Processing Location *
+              </label>
+              <input
+                type="text"
+                name="processingLocation"
+                value={formData.processingLocation}
+                onChange={handleInputChange}
+                required
+                placeholder="Enter processing facility location"
+                className="w-full px-4 py-3 border border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-purple-700 mb-2">
+                Start Date *
+              </label>
+              <input
+                type="date"
+                name="startDate"
+                value={formData.startDate}
+                onChange={handleInputChange}
+                required
+                className="w-full px-4 py-3 border border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-purple-700 mb-2">
+                End Date *
+              </label>
+              <input
+                type="date"
+                name="endDate"
+                value={formData.endDate}
+                onChange={handleInputChange}
+                required
+                className="w-full px-4 py-3 border border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-purple-700 mb-2">
                 Processing Method *
               </label>
               <select
@@ -329,7 +440,7 @@ const ProcessingForm: React.FC = () => {
 
             <div>
               <label className="block text-sm font-medium text-purple-700 mb-2">
-                Yield (grams) *
+                Output Yield (grams) *
               </label>
               <input
                 type="number"
@@ -341,6 +452,14 @@ const ProcessingForm: React.FC = () => {
                 placeholder="250.5"
                 className="w-full px-4 py-3 border border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
+              {yieldPercentage !== null && (
+                <div className="mt-2 flex items-center space-x-2 text-sm">
+                  <Calculator className="h-4 w-4 text-purple-600" />
+                  <span className="text-purple-700">
+                    Yield Percentage: <strong>{yieldPercentage.toFixed(2)}%</strong>
+                  </span>
+                </div>
+              )}
             </div>
 
             <div>
@@ -387,6 +506,30 @@ const ProcessingForm: React.FC = () => {
               />
             </div>
           </div>
+
+          {/* Location Info */}
+          {location && (
+            <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg p-4 border border-purple-200">
+              <h3 className="text-sm font-semibold text-purple-800 mb-2 flex items-center">
+                <MapPin className="h-4 w-4 mr-2" />
+                Processing Location & Timestamp
+              </h3>
+              <div className="grid grid-cols-3 gap-4 text-xs">
+                <div>
+                  <span className="font-medium text-purple-600">Latitude:</span>
+                  <p className="text-purple-900">{parseFloat(location.latitude).toFixed(6)}</p>
+                </div>
+                <div>
+                  <span className="font-medium text-purple-600">Longitude:</span>
+                  <p className="text-purple-900">{parseFloat(location.longitude).toFixed(6)}</p>
+                </div>
+                <div>
+                  <span className="font-medium text-purple-600">Timestamp:</span>
+                  <p className="text-purple-900">{new Date(location.timestamp).toLocaleString()}</p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Image Upload */}
           <div>

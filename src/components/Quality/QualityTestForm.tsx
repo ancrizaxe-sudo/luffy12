@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TestTube, Upload, AlertCircle, CheckCircle, Loader2, QrCode } from 'lucide-react';
+import { TestTube, Upload, AlertCircle, CheckCircle, Loader2, QrCode, MapPin, Plus, X } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import blockchainService from '../../services/blockchainService';
 import ipfsService from '../../services/ipfsService';
@@ -12,19 +12,58 @@ const QualityTestForm: React.FC = () => {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
   const [qrResult, setQrResult] = useState<any>(null);
+  const [location, setLocation] = useState<any>(null);
+  const [customParameters, setCustomParameters] = useState<Array<{name: string, value: string}>>([]);
 
   const [formData, setFormData] = useState({
     batchId: '',
     parentEventId: '',
     qrCode: '',
+    labName: '',
     moistureContent: '',
     purity: '',
     pesticideLevel: '',
+    testDate: new Date().toISOString().split('T')[0],
     testMethod: 'Standard Laboratory Test',
     notes: '',
     testerName: user?.name || '',
     image: null as File | null
   });
+
+  useEffect(() => {
+    getCurrentLocation();
+  }, []);
+
+  const getCurrentLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLocation({
+            latitude: position.coords.latitude.toString(),
+            longitude: position.coords.longitude.toString(),
+            timestamp: new Date().toISOString()
+          });
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+        }
+      );
+    }
+  };
+
+  const addCustomParameter = () => {
+    setCustomParameters([...customParameters, { name: '', value: '' }]);
+  };
+
+  const removeCustomParameter = (index: number) => {
+    setCustomParameters(customParameters.filter((_, i) => i !== index));
+  };
+
+  const updateCustomParameter = (index: number, field: 'name' | 'value', value: string) => {
+    const updated = [...customParameters];
+    updated[index][field] = value;
+    setCustomParameters(updated);
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -79,11 +118,14 @@ const QualityTestForm: React.FC = () => {
         eventId: testEventId,
         parentEventId,
         tester: formData.testerName,
+        labName: formData.labName,
         moistureContent: parseFloat(formData.moistureContent),
         purity: parseFloat(formData.purity),
         pesticideLevel: parseFloat(formData.pesticideLevel),
         testMethod: formData.testMethod,
-        testDate: new Date().toISOString().split('T')[0],
+        testDate: formData.testDate,
+        location: location,
+        customParameters: customParameters.filter(p => p.name && p.value),
         notes: formData.notes,
         images: imageHash ? [imageHash] : []
       };
@@ -139,7 +181,7 @@ const QualityTestForm: React.FC = () => {
           pesticideLevel: parseFloat(formData.pesticideLevel)
         },
         qr: qrResult,
-        fabric: fabricResult
+        fabric: blockchainResult
       });
       
       // Reset form
@@ -147,14 +189,17 @@ const QualityTestForm: React.FC = () => {
         batchId: '',
         parentEventId: '',
         qrCode: '',
+        labName: '',
         moistureContent: '',
         purity: '',
         pesticideLevel: '',
+        testDate: new Date().toISOString().split('T')[0],
         testMethod: 'Standard Laboratory Test',
         notes: '',
         testerName: user?.name || '',
         image: null
       });
+      setCustomParameters([]);
     } catch (error) {
       setError((error as Error).message);
     } finally {
@@ -242,8 +287,8 @@ const QualityTestForm: React.FC = () => {
             <TestTube className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-blue-800">Quality Testing</h2>
-            <p className="text-blue-600">Record quality test results</p>
+            <h2 className="text-2xl font-bold text-blue-800">Testing Labs</h2>
+            <p className="text-blue-600">Record quality test results with location and timestamp</p>
           </div>
         </div>
 
@@ -376,6 +421,35 @@ const QualityTestForm: React.FC = () => {
 
             <div>
               <label className="block text-sm font-medium text-blue-700 mb-2">
+                Lab/Institution Name *
+              </label>
+              <input
+                type="text"
+                name="labName"
+                value={formData.labName}
+                onChange={handleInputChange}
+                required
+                placeholder="Enter lab or institution name"
+                className="w-full px-4 py-3 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-blue-700 mb-2">
+                Test Date *
+              </label>
+              <input
+                type="date"
+                name="testDate"
+                value={formData.testDate}
+                onChange={handleInputChange}
+                required
+                className="w-full px-4 py-3 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-blue-700 mb-2">
                 Tester Name *
               </label>
               <input
@@ -388,6 +462,73 @@ const QualityTestForm: React.FC = () => {
                 className="w-full px-4 py-3 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
+          </div>
+
+          {/* Location Info */}
+          {location && (
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
+              <h3 className="text-sm font-semibold text-blue-800 mb-2 flex items-center">
+                <MapPin className="h-4 w-4 mr-2" />
+                Test Location & Timestamp
+              </h3>
+              <div className="grid grid-cols-3 gap-4 text-xs">
+                <div>
+                  <span className="font-medium text-blue-600">Latitude:</span>
+                  <p className="text-blue-900">{parseFloat(location.latitude).toFixed(6)}</p>
+                </div>
+                <div>
+                  <span className="font-medium text-blue-600">Longitude:</span>
+                  <p className="text-blue-900">{parseFloat(location.longitude).toFixed(6)}</p>
+                </div>
+                <div>
+                  <span className="font-medium text-blue-600">Timestamp:</span>
+                  <p className="text-blue-900">{new Date(location.timestamp).toLocaleString()}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Custom Parameters */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <label className="block text-sm font-medium text-blue-700">
+                Additional Test Parameters
+              </label>
+              <button
+                type="button"
+                onClick={addCustomParameter}
+                className="flex items-center space-x-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Add Parameter</span>
+              </button>
+            </div>
+            
+            {customParameters.map((param, index) => (
+              <div key={index} className="flex space-x-2 mb-2">
+                <input
+                  type="text"
+                  placeholder="Parameter name"
+                  value={param.name}
+                  onChange={(e) => updateCustomParameter(index, 'name', e.target.value)}
+                  className="flex-1 px-3 py-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                />
+                <input
+                  type="text"
+                  placeholder="Value"
+                  value={param.value}
+                  onChange={(e) => updateCustomParameter(index, 'value', e.target.value)}
+                  className="flex-1 px-3 py-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeCustomParameter(index)}
+                  className="px-2 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
           </div>
 
           {/* Image Upload */}

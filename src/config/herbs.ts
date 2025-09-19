@@ -166,3 +166,58 @@ export const APPROVED_ZONES = [
   'Sahyadri Range - Maharashtra',
   'Vindhya Range - Madhya Pradesh'
 ];
+
+// Herb-specific zonal and seasonal criteria
+export const HERB_CRITERIA = {
+  'Withania somnifera (L.) Dunal': { // Ashwagandha
+    zones: ['Rajasthan Desert Region', 'Central India - Madhya Pradesh'],
+    seasons: ['October', 'November', 'December', 'January']
+  },
+  'Ocimum tenuiflorum L.': { // Tulsi
+    zones: ['Central India - Madhya Pradesh', 'Eastern Ghats - Tamil Nadu'],
+    seasons: ['October', 'November', 'December']
+  },
+  'Azadirachta indica A. Juss': { // Neem
+    zones: ['Rajasthan Desert Region', 'Central India - Madhya Pradesh', 'Eastern Ghats - Tamil Nadu'],
+    seasons: ['April', 'May', 'June']
+  },
+  'Bacopa monnieri (L.) Pennell': { // Brahmi
+    zones: ['Western Ghats - Kerala', 'Eastern Ghats - Tamil Nadu'],
+    seasons: ['March', 'April', 'May', 'September', 'October']
+  },
+  'Asparagus racemosus Willd.': { // Shatavari
+    zones: ['Himalayan Region - Uttarakhand', 'Western Ghats - Kerala'],
+    seasons: ['September', 'October', 'November']
+  }
+  // Add more herbs as needed
+};
+
+export const validateHerbCriteria = (herbSpecies: string, zone: string, harvestDate: string) => {
+  const criteria = HERB_CRITERIA[herbSpecies as keyof typeof HERB_CRITERIA];
+  
+  if (!criteria) {
+    return {
+      zoneValid: true,
+      seasonValid: true,
+      warnings: ['No specific criteria defined for this herb']
+    };
+  }
+
+  const harvestMonth = new Date(harvestDate).toLocaleString('default', { month: 'long' });
+  const zoneValid = criteria.zones.includes(zone);
+  const seasonValid = criteria.seasons.includes(harvestMonth);
+
+  const warnings = [];
+  if (!zoneValid) {
+    warnings.push(`Recommended zones: ${criteria.zones.join(', ')}`);
+  }
+  if (!seasonValid) {
+    warnings.push(`Recommended harvest months: ${criteria.seasons.join(', ')}`);
+  }
+
+  return {
+    zoneValid,
+    seasonValid,
+    warnings
+  };
+};

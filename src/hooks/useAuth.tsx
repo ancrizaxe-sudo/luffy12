@@ -12,7 +12,8 @@ interface User {
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
-  login: (address: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
+  loginAsConsumer: () => void;
   logout: () => void;
   loading: boolean;
 }
@@ -56,50 +57,36 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const login = async (address: string, password: string) => {
+  const login = async (email: string, password: string) => {
     // Demo mode - simulate login without backend
     const demoUsers = {
       'collector@demo.com': {
-        address: '0x627306090abab3a6e1400e9345bc60c78a8bef57',
+        address: 'collector_address',
         name: 'John Collector',
         organization: 'Himalayan Herbs Co.',
         role: 1,
         email: 'collector@demo.com'
       },
       'tester@demo.com': {
-        address: '0xf17f52151ebef6c7334fad080c5704d77216b732',
+        address: 'tester_address',
         name: 'Sarah Tester',
         organization: 'Quality Labs Inc.',
         role: 2,
         email: 'tester@demo.com'
       },
       'processor@demo.com': {
-        address: '0xc5fdf4076b8f3a5357c5e395ab970b5b54098fef',
+        address: 'processor_address',
         name: 'Mike Processor',
         organization: 'Herbal Processing Ltd.',
         role: 3,
         email: 'processor@demo.com'
       },
       'manufacturer@demo.com': {
-        address: '0x821aea9a577a9b44299b9c15c88cf3087f3b5544',
+        address: 'manufacturer_address',
         name: 'Lisa Manufacturer',
         organization: 'Ayurvedic Products Inc.',
         role: 4,
         email: 'manufacturer@demo.com'
-      },
-      'admin@demo.com': {
-        address: '0x627306090abab3a6e1400e9345bc60c78a8bef57',
-        name: 'Admin User',
-        organization: 'HerbionYX Platform',
-        role: 5,
-        email: 'admin@demo.com'
-      },
-      'consumer@demo.com': {
-        address: '0x0000000000000000000000000000000000000000',
-        name: 'Consumer User',
-        organization: 'General Public',
-        role: 6,
-        email: 'consumer@demo.com'
       }
     };
 
@@ -107,7 +94,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       throw new Error('Invalid password');
     }
 
-    const user = demoUsers[address as keyof typeof demoUsers];
+    const user = demoUsers[email as keyof typeof demoUsers];
     if (!user) {
       throw new Error('User not found');
     }
@@ -119,6 +106,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setUser(user);
   };
 
+  const loginAsConsumer = () => {
+    const consumerUser = {
+      address: 'consumer_address',
+      name: 'Consumer User',
+      organization: 'General Public',
+      role: 6,
+      email: 'consumer@demo.com'
+    };
+    
+    localStorage.setItem('token', 'consumer-token');
+    setUser(consumerUser);
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     setUser(null);
@@ -128,6 +128,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     user,
     isAuthenticated: !!user,
     login,
+    loginAsConsumer,
     logout,
     loading
   };
