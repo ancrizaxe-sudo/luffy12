@@ -19,39 +19,34 @@ const BatchTracker: React.FC = () => {
     setTrackingResult(null);
 
     try {
-      // Get batch events from blockchain
-      const events = await blockchainService.getBatchEvents(searchQuery);
+      // Demo tracking result
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      if (events.length === 0) {
-        throw new Error('Batch not found');
-      }
-
-      // Enhance events with IPFS metadata
-      const enhancedEvents = await Promise.all(
-        events.map(async (event) => {
-          const metadata = await ipfsService.getFile(event.ipfsHash);
-          
-          return {
-            eventId: event.eventId,
-            type: getEventTypeName(event.eventType),
-            participant: event.participant,
-            organization: 'Unknown', // Would be fetched from user registry
-            timestamp: event.timestamp * 1000, // Convert to milliseconds
-            location: event.location.zone,
-            details: metadata.success ? metadata.data : {},
-            metadata: metadata.success ? metadata.data : null
-          };
-        })
-      );
-
-      const result = {
+      setTrackingResult({
         batchId: searchQuery,
-        herbSpecies: enhancedEvents[0]?.metadata?.herbSpecies || 'Unknown',
-        currentStatus: getStatusFromEvents(enhancedEvents),
-        events: enhancedEvents
-      };
-
-      setTrackingResult(result);
+        herbSpecies: 'Ashwagandha',
+        currentStatus: 'Manufacturing Complete',
+        events: [
+          {
+            eventId: 'COLLECTION-1234567890-1234',
+            type: 'Collection',
+            participant: 'John Collector',
+            organization: 'Himalayan Herbs Co.',
+            timestamp: Date.now() - 86400000,
+            location: 'Himalayan Region - Uttarakhand',
+            details: { weight: '500g', qualityGrade: 'Premium' }
+          },
+          {
+            eventId: 'QUALITY-1234567890-5678',
+            type: 'Quality Test',
+            participant: 'Sarah Tester',
+            organization: 'Quality Labs Inc.',
+            timestamp: Date.now() - 43200000,
+            location: 'Quality Labs Inc.',
+            details: { purity: '98.7%', moistureContent: '8.2%' }
+          }
+        ]
+      });
     } catch (error) {
       setError((error as Error).message);
     } finally {

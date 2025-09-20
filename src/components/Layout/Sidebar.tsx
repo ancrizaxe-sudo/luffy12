@@ -57,7 +57,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeTab, onTabChange }) => 
     // Consumer role (role 6)
     return [
       { id: 'consumer', label: 'Verify Product', icon: Shield },
-      { id: 'tracking', label: 'Track Batch', icon: Search },
       { id: 'rating', label: 'Rate Platform', icon: BarChart3 }
     ];
   };

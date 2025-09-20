@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useEffect } from 'react';
 import { Cpu, Upload, AlertCircle, CheckCircle, Loader2, QrCode, MapPin, Calculator } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { PROCESSING_METHODS } from '../../config/herbs';
@@ -172,7 +173,7 @@ const ProcessingForm: React.FC = () => {
         eventData
       );
 
-      if (!blockchainResult.success) {
+      if (!blockchainResult || !blockchainResult.success) {
         throw new Error('Failed to add processing event to blockchain');
       }
 
@@ -189,7 +190,7 @@ const ProcessingForm: React.FC = () => {
           yieldPercentage: yieldPercentage
         },
         qr: qrResult,
-        fabric: blockchainResult
+        blockchain: blockchainResult
       });
       
       // Reset form
@@ -261,6 +262,12 @@ const ProcessingForm: React.FC = () => {
                 <span className="font-medium text-purple-700">Duration:</span>
                 <p className="text-purple-900">{qrResult.processing.duration}</p>
               </div>
+              {qrResult.processing.yieldPercentage && (
+                <div>
+                  <span className="font-medium text-purple-700">Yield %:</span>
+                  <p className="text-purple-900">{qrResult.processing.yieldPercentage.toFixed(2)}%</p>
+                </div>
+              )}
             </div>
           </div>
 

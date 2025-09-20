@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Menu, X, Leaf, User, LogOut, Home, QrCode } from 'lucide-react';
+import { Menu, X, Leaf, User, LogOut } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
 interface HeaderProps {
@@ -45,14 +45,6 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle, isSidebarOpen }) => {
 
         {/* Quick Actions */}
         <div className="flex items-center space-x-3">
-          <button className="p-2 text-green-700 hover:bg-green-50 rounded-lg transition-colors">
-            <Home className="h-5 w-5" />
-          </button>
-          
-          <button className="p-2 text-green-700 hover:bg-green-50 rounded-lg transition-colors">
-            <QrCode className="h-5 w-5" />
-          </button>
-
           {/* Profile Dropdown */}
           <div className="relative">
             <button

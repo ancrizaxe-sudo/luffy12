@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useEffect } from 'react';
 import { TestTube, Upload, AlertCircle, CheckCircle, Loader2, QrCode, MapPin, Plus, X } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import blockchainService from '../../services/blockchainService';
@@ -166,7 +167,7 @@ const QualityTestForm: React.FC = () => {
         eventData
       );
 
-      if (!blockchainResult.success) {
+      if (!blockchainResult || !blockchainResult.success) {
         throw new Error('Failed to add quality test to blockchain');
       }
 
@@ -181,7 +182,7 @@ const QualityTestForm: React.FC = () => {
           pesticideLevel: parseFloat(formData.pesticideLevel)
         },
         qr: qrResult,
-        fabric: blockchainResult
+        blockchain: blockchainResult
       });
       
       // Reset form
