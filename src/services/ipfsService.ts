@@ -1,10 +1,29 @@
+import apiService from './apiService';
+
 class IPFSService {
-  // Demo IPFS service - in production this would connect to real IPFS
+  private isBackendAvailable = false;
+
+  constructor() {
+    this.checkBackendAvailability();
+  }
+
+  private async checkBackendAvailability() {
+    try {
+      await fetch('http://localhost:5000/health');
+      this.isBackendAvailable = true;
+    } catch {
+      this.isBackendAvailable = false;
+    }
+  }
 
   async uploadJSON(jsonData: any, name: string) {
     try {
-      // Demo mode - simulate IPFS upload
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (this.isBackendAvailable) {
+        return await apiService.uploadJSONToIPFS(jsonData, name);
+      } else {
+        // Demo mode - simulate IPFS upload
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
       
       const mockHash = `Qm${Math.random().toString(36).substr(2, 44)}`;
       
@@ -21,8 +40,12 @@ class IPFSService {
 
   async uploadFile(file: File) {
     try {
-      // Demo mode - simulate file upload
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      if (this.isBackendAvailable) {
+        return await apiService.uploadToIPFS(file);
+      } else {
+        // Demo mode - simulate file upload
+        await new Promise(resolve => setTimeout(resolve, 1500));
+      }
       
       const mockHash = `Qm${Math.random().toString(36).substr(2, 44)}`;
       
@@ -39,8 +62,12 @@ class IPFSService {
 
   async getFile(ipfsHash: string) {
     try {
-      // Demo mode - return mock metadata
-      await new Promise(resolve => setTimeout(resolve, 500));
+      if (this.isBackendAvailable) {
+        return await apiService.getFromIPFS(ipfsHash);
+      } else {
+        // Demo mode - return mock metadata
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
       
       return {
         success: true,
@@ -65,6 +92,17 @@ class IPFSService {
       ...collectionData
     };
     
+    if (this.isBackendAvailable) {
+      try {
+        return await apiService.makeRequest('/api/ipfs/create-collection-metadata', {
+          method: 'POST',
+          body: JSON.stringify({ collectionData: metadata })
+        });
+      } catch (error) {
+        console.log('Backend unavailable, using demo mode');
+      }
+    }
+    
     return await this.uploadJSON(metadata, `collection-${collectionData.batchId}`);
   }
 
@@ -74,6 +112,17 @@ class IPFSService {
       timestamp: new Date().toISOString(),
       ...testData
     };
+    
+    if (this.isBackendAvailable) {
+      try {
+        return await apiService.makeRequest('/api/ipfs/create-quality-test-metadata', {
+          method: 'POST',
+          body: JSON.stringify({ testData: metadata })
+        });
+      } catch (error) {
+        console.log('Backend unavailable, using demo mode');
+      }
+    }
     
     return await this.uploadJSON(metadata, `quality-test-${testData.eventId}`);
   }
@@ -85,6 +134,17 @@ class IPFSService {
       ...processData
     };
     
+    if (this.isBackendAvailable) {
+      try {
+        return await apiService.makeRequest('/api/ipfs/create-processing-metadata', {
+          method: 'POST',
+          body: JSON.stringify({ processData: metadata })
+        });
+      } catch (error) {
+        console.log('Backend unavailable, using demo mode');
+      }
+    }
+    
     return await this.uploadJSON(metadata, `processing-${processData.eventId}`);
   }
 
@@ -94,6 +154,17 @@ class IPFSService {
       timestamp: new Date().toISOString(),
       ...mfgData
     };
+    
+    if (this.isBackendAvailable) {
+      try {
+        return await apiService.makeRequest('/api/ipfs/create-manufacturing-metadata', {
+          method: 'POST',
+          body: JSON.stringify({ mfgData: metadata })
+        });
+      } catch (error) {
+        console.log('Backend unavailable, using demo mode');
+      }
+    }
     
     return await this.uploadJSON(metadata, `manufacturing-${mfgData.eventId}`);
   }

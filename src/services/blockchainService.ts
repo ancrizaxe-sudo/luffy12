@@ -1,30 +1,44 @@
 import { FABRIC_CONFIG, NETWORK_CONFIG, CHAINCODE_FUNCTIONS } from '../config/fabric';
+import apiService from './apiService';
 
-// Fabric service for demo mode
-// In production, this would connect to real Hyperledger Fabric network
 class BlockchainService {
   private initialized = false;
+  private isBackendAvailable = false;
 
   async initialize() {
     if (this.initialized) return true;
     
     try {
-      // Initialize Fabric connection (demo mode)
-      console.log('Initializing Fabric service...');
-
-      this.initialized = true;
-      console.log('✅ Fabric service initialized');
-      return true;
+      // Try to connect to backend first
+      const response = await apiService.initializeBlockchain();
+      if (response.success) {
+        this.isBackendAvailable = true;
+        console.log('✅ Connected to Hyperledger Fabric backend');
+      } else {
+        throw new Error('Backend not available');
+      }
     } catch (error) {
-      console.error('Error initializing Fabric service:', error);
-      return false;
+      console.log('⚠️  Backend not available, running in demo mode');
+      this.isBackendAvailable = false;
     }
+
+    this.initialized = true;
+    return true;
   }
 
   async createBatch(userAddress: string, batchData: any) {
     try {
-      // Demo mode - simulate successful Fabric transaction
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (this.isBackendAvailable) {
+        // Use real backend
+        const response = await apiService.makeRequest('/api/blockchain/create-batch', {
+          method: 'POST',
+          body: JSON.stringify({ userAddress, batchData })
+        });
+        return response;
+      } else {
+        // Demo mode - simulate successful Fabric transaction
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
       
       return {
         success: true,
@@ -40,8 +54,16 @@ class BlockchainService {
 
   async addQualityTestEvent(userAddress: string, eventData: any) {
     try {
-      // Demo mode - simulate successful Fabric transaction
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (this.isBackendAvailable) {
+        const response = await apiService.makeRequest('/api/blockchain/add-quality-test', {
+          method: 'POST',
+          body: JSON.stringify({ userAddress, eventData })
+        });
+        return response;
+      } else {
+        // Demo mode
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
       
       return {
         success: true,
@@ -57,8 +79,16 @@ class BlockchainService {
 
   async addProcessingEvent(userAddress: string, eventData: any) {
     try {
-      // Demo mode - simulate successful Fabric transaction
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (this.isBackendAvailable) {
+        const response = await apiService.makeRequest('/api/blockchain/add-processing', {
+          method: 'POST',
+          body: JSON.stringify({ userAddress, eventData })
+        });
+        return response;
+      } else {
+        // Demo mode
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
       
       return {
         success: true,
@@ -74,8 +104,16 @@ class BlockchainService {
 
   async addManufacturingEvent(userAddress: string, eventData: any) {
     try {
-      // Demo mode - simulate successful Fabric transaction
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (this.isBackendAvailable) {
+        const response = await apiService.makeRequest('/api/blockchain/add-manufacturing', {
+          method: 'POST',
+          body: JSON.stringify({ userAddress, eventData })
+        });
+        return response;
+      } else {
+        // Demo mode
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
       
       return {
         success: true,
@@ -91,8 +129,13 @@ class BlockchainService {
 
   async getBatchEvents(batchId: string) {
     try {
-      // Demo mode - return mock events
-      await new Promise(resolve => setTimeout(resolve, 500));
+      if (this.isBackendAvailable) {
+        const response = await apiService.getBatchInfo(batchId);
+        return response.data?.events || [];
+      } else {
+        // Demo mode - return mock events
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
       
       return [
         {
@@ -112,8 +155,13 @@ class BlockchainService {
 
   async getAllBatches() {
     try {
-      // Demo mode - return mock batches
-      await new Promise(resolve => setTimeout(resolve, 500));
+      if (this.isBackendAvailable) {
+        const response = await apiService.getAllBatches();
+        return response.data || [];
+      } else {
+        // Demo mode - return mock batches
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
       
       return [
         {
@@ -130,15 +178,31 @@ class BlockchainService {
   }
 
   generateBatchId(): string {
+    if (this.isBackendAvailable) {
+      // In production, this should be called from backend
+      // For now, generate locally
+    }
     const timestamp = Date.now();
     const random = Math.floor(Math.random() * 10000);
     return `HERB-${timestamp}-${random}`;
   }
 
   generateEventId(eventType: string): string {
+    if (this.isBackendAvailable) {
+      // In production, this should be called from backend
+      // For now, generate locally
+    }
     const timestamp = Date.now();
     const random = Math.floor(Math.random() * 10000);
     return `${eventType}-${timestamp}-${random}`;
+  }
+
+  getConnectionStatus() {
+    return {
+      initialized: this.initialized,
+      backendAvailable: this.isBackendAvailable,
+      mode: this.isBackendAvailable ? 'production' : 'demo'
+    };
   }
 }
 

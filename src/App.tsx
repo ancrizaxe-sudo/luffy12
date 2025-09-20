@@ -12,6 +12,7 @@ import BatchTracker from './components/Tracking/BatchTracker';
 import ConsumerView from './components/Consumer/ConsumerView';
 import AuditLog from './components/Audit/AuditLog';
 import PlatformRating from './components/Consumer/PlatformRating';
+import ConnectionStatus from './components/Common/ConnectionStatus';
 
 const AppContent: React.FC = () => {
   const { isAuthenticated, loading, user } = useAuth();
@@ -101,6 +102,9 @@ const AppContent: React.FC = () => {
           {renderContent()}
         </main>
       </div>
+      
+      {/* Connection Status Indicator */}
+      <ConnectionStatus />
     </div>
   );
 };
