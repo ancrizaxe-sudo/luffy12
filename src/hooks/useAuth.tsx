@@ -103,6 +103,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     localStorage.setItem('token', 'demo-token');
+    localStorage.setItem('userRole', user.role.toString()); // Store role for routing
     setUser(user);
   };
 
@@ -116,11 +117,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
     
     localStorage.setItem('token', 'consumer-token');
+    localStorage.setItem('userRole', '6'); // Store consumer role
     setUser(consumerUser);
   };
 
   const logout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('userRole');
     setUser(null);
   };
 

@@ -73,26 +73,65 @@ const CollectionForm: React.FC = () => {
 
   const getWeatherData = async (lat: number, lon: number) => {
     try {
-      // Using OpenWeatherMap free API (demo)
+      // Using Open-Meteo free weather API (no API key required)
       const response = await fetch(
-        `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=demo&units=metric`
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=temperature_2m,relative_humidity_2m&timezone=auto`
       );
+      
       if (response.ok) {
         const data = await response.json();
+        const currentWeather = data.current_weather;
+        const currentHour = new Date().getHours();
+        const humidity = data.hourly?.relative_humidity_2m?.[currentHour] || 'N/A';
+        
         setWeather({
-          temperature: data.main?.temp || 'N/A',
-          humidity: data.main?.humidity || 'N/A',
-          description: data.weather?.[0]?.description || 'N/A'
+          temperature: `${Math.round(currentWeather.temperature)}°C`,
+          humidity: `${humidity}%`,
+          description: getWeatherDescription(currentWeather.weathercode),
+          windSpeed: `${currentWeather.windspeed} km/h`,
+          windDirection: `${currentWeather.winddirection}°`
         });
+      } else {
+        throw new Error('Weather API unavailable');
       }
     } catch (error) {
-      // Demo weather data
+      console.error('Error fetching weather:', error);
+      // Fallback to demo weather data
       setWeather({
         temperature: '25°C',
         humidity: '65%',
-        description: 'Clear sky'
+        description: 'Weather data unavailable',
+        windSpeed: 'N/A',
+        windDirection: 'N/A'
       });
     }
+  };
+
+  const getWeatherDescription = (weatherCode: number): string => {
+    const weatherCodes: { [key: number]: string } = {
+      0: 'Clear sky',
+      1: 'Mainly clear',
+      2: 'Partly cloudy',
+      3: 'Overcast',
+      45: 'Fog',
+      48: 'Depositing rime fog',
+      51: 'Light drizzle',
+      53: 'Moderate drizzle',
+      55: 'Dense drizzle',
+      61: 'Slight rain',
+      63: 'Moderate rain',
+      65: 'Heavy rain',
+      71: 'Slight snow fall',
+      73: 'Moderate snow fall',
+      75: 'Heavy snow fall',
+      80: 'Slight rain showers',
+      81: 'Moderate rain showers',
+      82: 'Violent rain showers',
+      95: 'Thunderstorm',
+      96: 'Thunderstorm with slight hail',
+      99: 'Thunderstorm with heavy hail'
+    };
+    return weatherCodes[weatherCode] || 'Unknown';
   };
 
   const validateHerbZone = (lat: number, lon: number) => {
@@ -429,10 +468,10 @@ const CollectionForm: React.FC = () => {
           {(location || weather) && (
             <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg p-6 border border-blue-200">
               <h3 className="text-lg font-semibold text-blue-800 mb-4 flex items-center">
-                <Cloud className="h-5 w-5 mr-2" />
+                <Thermometer className="h-5 w-5 mr-2" />
                 Environmental Conditions
               </h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 text-sm">
                 {location && (
                   <>
                     <div>
@@ -455,8 +494,20 @@ const CollectionForm: React.FC = () => {
                       <span className="font-medium text-blue-600">Humidity:</span>
                       <p className="text-blue-900">{weather.humidity}</p>
                     </div>
+                    <div>
+                      <span className="font-medium text-blue-600">Conditions:</span>
+                      <p className="text-blue-900">{weather.description}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium text-blue-600">Wind:</span>
+                      <p className="text-blue-900">{weather.windSpeed}</p>
+                    </div>
                   </>
                 )}
+              </div>
+              <div className="mt-3 text-xs text-blue-600 flex items-center">
+                <Cloud className="h-3 w-3 mr-1" />
+                <span>Real-time weather data from Open-Meteo API</span>
               </div>
             </div>
           )}

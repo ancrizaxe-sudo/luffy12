@@ -21,7 +21,8 @@ const AppContent: React.FC = () => {
 
   // Set default tab based on user role
   useEffect(() => {
-    if (user && !activeTab) {
+    if (user) {
+      // Always set the tab based on user role, even if activeTab exists
       switch (user.role) {
         case 1: setActiveTab('collection'); break;
         case 2: setActiveTab('quality'); break;
@@ -31,7 +32,7 @@ const AppContent: React.FC = () => {
         default: setActiveTab('consumer');
       }
     }
-  }, [user, activeTab]);
+  }, [user]); // Remove activeTab dependency to always update when user changes
 
   if (loading) {
     return (

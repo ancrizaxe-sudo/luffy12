@@ -152,8 +152,14 @@ app.listen(PORT, () => {
     if (success) {
       console.log('🔗 Connected to Hyperledger Fabric network');
     } else {
-      console.log('❌ Failed to connect to Hyperledger Fabric network');
+      console.log('⚠️  Failed to connect to Hyperledger Fabric network - running in demo mode');
+      console.log('💡 To enable full blockchain functionality, start the Fabric network:');
+      console.log('   cd fabric-network/scripts && ./network.sh up');
     }
+  }).catch(error => {
+    console.log('⚠️  Fabric network unavailable - running in demo mode');
+    console.log('💡 To enable full blockchain functionality, start the Fabric network:');
+    console.log('   cd fabric-network/scripts && ./network.sh up');
   });
 });
 
