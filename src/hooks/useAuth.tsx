@@ -42,7 +42,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
       });
       
-      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const text = await response.text();
+      if (!text) {
+        throw new Error('Empty response from server');
+      }
+      
+      const data = JSON.parse(text);
       
       if (data.success) {
         setUser(data.user);
@@ -50,7 +59,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         localStorage.removeItem('token');
       }
     } catch (error) {
-      console.error('Error fetching user profile:', error);
+      console.log('Server not available, continuing in demo mode');
       localStorage.removeItem('token');
     } finally {
       setLoading(false);

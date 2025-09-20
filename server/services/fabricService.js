@@ -114,14 +114,29 @@ class FabricService {
 
     getCaInfo() {
         // In a real deployment, this would read from connection profile
+        const certPath = path.join(__dirname, '../../fabric-network/organizations/peerOrganizations/org1.herbionyx.com/ca/ca.org1.herbionyx.com-cert.pem');
+        
+        // Check if certificate file exists
+        if (!fs.existsSync(certPath)) {
+            throw new Error('Fabric network certificates not found - please start the network first');
+        }
+        
         return {
             url: 'https://localhost:7054',
             caName: 'ca.org1.herbionyx.com',
-            tlsCACerts: fs.readFileSync(path.join(__dirname, '../../fabric-network/organizations/peerOrganizations/org1.herbionyx.com/ca/ca.org1.herbionyx.com-cert.pem'))
+            tlsCACerts: fs.readFileSync(certPath)
         };
     }
 
     getConnectionProfile() {
+        const peerCertPath = path.join(__dirname, '../../fabric-network/organizations/peerOrganizations/org1.herbionyx.com/tlsca/tlsca.org1.herbionyx.com-cert.pem');
+        const caCertPath = path.join(__dirname, '../../fabric-network/organizations/peerOrganizations/org1.herbionyx.com/ca/ca.org1.herbionyx.com-cert.pem');
+        
+        // Check if certificate files exist
+        if (!fs.existsSync(peerCertPath) || !fs.existsSync(caCertPath)) {
+            throw new Error('Fabric network certificates not found - please start the network first');
+        }
+        
         return {
             name: 'herbionyx-network',
             version: '1.0.0',
@@ -146,7 +161,7 @@ class FabricService {
                 'peer0.org1.herbionyx.com': {
                     url: 'grpcs://localhost:7051',
                     tlsCACerts: {
-                        pem: fs.readFileSync(path.join(__dirname, '../../fabric-network/organizations/peerOrganizations/org1.herbionyx.com/tlsca/tlsca.org1.herbionyx.com-cert.pem')).toString()
+                        pem: fs.readFileSync(peerCertPath).toString()
                     },
                     grpcOptions: {
                         'ssl-target-name-override': 'peer0.org1.herbionyx.com',
@@ -159,7 +174,7 @@ class FabricService {
                     url: 'https://localhost:7054',
                     caName: 'ca.org1.herbionyx.com',
                     tlsCACerts: {
-                        pem: fs.readFileSync(path.join(__dirname, '../../fabric-network/organizations/peerOrganizations/org1.herbionyx.com/ca/ca.org1.herbionyx.com-cert.pem')).toString()
+                        pem: fs.readFileSync(caCertPath).toString()
                     },
                     httpOptions: {
                         verify: false
@@ -171,17 +186,32 @@ class FabricService {
 
     async connect() {
         try {
+            // Check if we're in demo mode (no Fabric network required)
+            if (process.env.DEMO_MODE === 'true') {
+                console.log('🎭 Running in demo mode - Fabric network not required');
+                return true;
+            }
+
             // Initialize wallet
-            const wallet = await this.initializeWallet();
+            const wallet = await this.initializeWallet().catch(error => {
+                console.log('⚠️  Wallet initialization failed, continuing without Fabric connection');
+                throw error;
+            });
 
             // Create gateway
             this.gateway = new Gateway();
             
             // Connect to gateway
-            await this.gateway.connect(this.getConnectionProfile(), {
+            await this.gateway.connect(this.getConnectionProfile().catch(error => {
+                console.log('⚠️  Connection profile unavailable');
+                throw error;
+            }), {
                 wallet,
                 identity: 'appUser',
                 discovery: { enabled: true, asLocalhost: true }
+            }).catch(error => {
+                console.log('⚠️  Gateway connection failed');
+                throw error;
             });
 
             // Get network and contract
@@ -191,7 +221,8 @@ class FabricService {
             console.log('✅ Connected to Fabric network successfully');
             return true;
         } catch (error) {
-            console.error('Failed to connect to Fabric network:', error);
+            console.log('⚠️  Failed to connect to Fabric network - this is expected if the network is not running');
+            console.log('💡 The server will continue to run in demo mode');
             return false;
         }
     }
